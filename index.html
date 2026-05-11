@@ -1,5 +1,5 @@
 ```react
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Users, 
   Wallet, 
@@ -10,194 +10,96 @@ import {
   X,
   TrendingUp,
   Edit2,
-  RefreshCw,
   Info,
   CheckCircle2
 } from 'lucide-react';
-import { initializeApp } from 'firebase/app';
-import { 
-  getFirestore, 
-  doc, 
-  setDoc, 
-  onSnapshot, 
-  collection, 
-  query 
-} from 'firebase/firestore';
-import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
-
-/**
- * Firebase Config - এই ভেরিয়েবলগুলো এনভায়রনমেন্ট থেকে আসে।
- * গিটহাবে পুশ করার সময় মনে রাখবেন এপিআই কীগুলো সিকিউর রাখতে।
- */
-const firebaseConfig = JSON.parse(__firebase_config);
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'spondhan-ledger-final';
 
 const App = () => {
-  const [user, setUser] = useState(null);
   const [activeYear, setActiveYear] = useState('2026');
   const [view, setView] = useState('dashboard');
   const [editingMember, setEditingMember] = useState(null);
   const [editValue, setEditValue] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [yearlyData, setYearlyData] = useState({});
 
-  // অথেন্টিকেশন হ্যান্ডলিং
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (err) {
-        console.error("Auth Error:", err);
-      }
-    };
-    initAuth();
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
+  // Initial data based on your uploaded images
+  const [ledgerData, setLedgerData] = useState({
+    '2022': [
+      { id: 1, name: "Md. Tareq", paid: 0 }, { id: 2, name: "Simon Hoque", paid: 0 },
+      { id: 3, name: "Ismaiel Zabiullah", paid: 2000 }, { id: 4, name: "Zunaid Bhuiyan", paid: 12000 },
+      { id: 5, name: "Enamul Hoque Rimon", paid: 12000 }, { id: 6, name: "Md. Al Amin Robin", paid: 7000 },
+      { id: 7, name: "Sujan Khan", paid: 0 }, { id: 8, name: "Rashedul Alam", paid: 11000 },
+      { id: 9, name: "Arif Chowdhury", paid: 12000 }, { id: 10, name: "Md. Nazim Uddin Bhuiyan", paid: 7000 },
+      { id: 11, name: "Md Sagor Khandakar", paid: 12000 }, { id: 12, name: "Mohamad Safayet Khan", paid: 1000 },
+      { id: 13, name: "Md Ali Afzal", paid: 12000 }, { id: 14, name: "Mosharof Hossain", paid: 12000 },
+      { id: 15, name: "Md. Lutfur Rahman (Rasel)", paid: 6000 }
+    ],
+    '2023': [
+      { id: 1, name: "Md. Tareq", paid: 1000 }, { id: 2, name: "Simon Hoque", paid: 11000 },
+      { id: 3, name: "Ismaiel Zabiullah", paid: 11000 }, { id: 4, name: "Zunaid Bhuiyan", paid: 12000 },
+      { id: 5, name: "Enamul Hoque Rimon", paid: 12000 }, { id: 6, name: "Md. Al Amin Robin", paid: 12000 },
+      { id: 7, name: "Sujan Khan", paid: 4000 }, { id: 8, name: "Rashedul Alam", paid: 12000 },
+      { id: 9, name: "Arif Chowdhury", paid: 12000 }, { id: 10, name: "Md. Nazim Uddin Bhuiyan", paid: 12000 },
+      { id: 11, name: "Md Sagor Khandakar", paid: 10000 }, { id: 12, name: "Mohamad Safayet Khan", paid: 12000 },
+      { id: 13, name: "Md Ali Afzal", paid: 12000 }, { id: 14, name: "Mosharof Hossain", paid: 12000 },
+      { id: 15, name: "Md. Lutfur Rahman (Rasel)", paid: 0 }
+    ],
+    '2024': [
+      { id: 1, name: "Md. Tareq", paid: 0 }, { id: 2, name: "Simon Hoque", paid: 0 },
+      { id: 4, name: "Zunaid Bhuiyan", paid: 12000 }, { id: 5, name: "Enamul Hoque Rimon", paid: 12000 },
+      { id: 8, name: "Rashedul Alam", paid: 12000 }, { id: 9, name: "Arif Chowdhury", paid: 11000 },
+      { id: 10, name: "Md. Nazim Uddin Bhuiyan", paid: 4000 }, { id: 13, name: "Md Ali Afzal", paid: 12000 },
+      { id: 14, name: "Mosharof Hossain", paid: 12000 }
+    ],
+    '2026': [
+      { id: 1, name: "Md. Tareq", paid: 4000 }, { id: 2, name: "Simon Hoque", paid: 3000 },
+      { id: 3, name: "Ismaiel Zabiullah", paid: 4000 }, { id: 4, name: "Zunaid Bhuiyan", paid: 16000 },
+      { id: 5, name: "Enamul Hoque Rimon", paid: 16000 }, { id: 6, name: "Md. Al Amin Robin", paid: 4000 },
+      { id: 7, name: "Sujan Khan", paid: 4000 }, { id: 8, name: "Rashedul Alam", paid: 14000 },
+      { id: 9, name: "Arif Chowdhury", paid: 4000 }, { id: 10, name: "Md. Nazim Uddin Bhuiyan", paid: 4000 },
+      { id: 11, name: "Md Sagor Khandakar", paid: 4000 }, { id: 12, name: "Mohamad Safayet Khan", paid: 4000 },
+      { id: 13, name: "Md Ali Afzal", paid: 5000 }, { id: 14, name: "Mosharof Hossain", paid: 4000 },
+      { id: 15, name: "Md. Lutfur Rahman (Rasel)", paid: 4000 }
+    ]
+  });
 
-  // ডাটাবেজ থেকে রিয়েল-টাইম ডাটা ফেচ করা
-  useEffect(() => {
-    if (!user) return;
+  const years = Object.keys(ledgerData).sort();
+  const currentMembers = ledgerData[activeYear] || [];
 
-    const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'ledger'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = {};
-      snapshot.forEach((doc) => {
-        data[doc.id] = doc.data();
-      });
-      
-      // ডাটাবেজ খালি থাকলে প্রাথমিক ডাটা দিয়ে সিড করা
-      if (Object.keys(data).length === 0) {
-        seedDatabase();
-      } else {
-        setYearlyData(data);
-        setLoading(false);
-      }
-    }, (error) => {
-      console.error("Firestore Error:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-  // প্রাথমিক ডাটা সেটআপ (ছবির তথ্য অনুযায়ী)
-  const seedDatabase = async () => {
-    const membersList = [
-      { id: 1, name: "Md. Tareq" }, { id: 2, name: "Simon Hoque" },
-      { id: 3, name: "Ismaiel Zabiullah" }, { id: 4, name: "Zunaid Bhuiyan" },
-      { id: 5, name: "Enamul Hoque Rimon" }, { id: 6, name: "Md. Al Amin Robin" },
-      { id: 7, name: "Sujan Khan" }, { id: 8, name: "Rashedul Alam" },
-      { id: 9, name: "Arif Chowdhury" }, { id: 10, name: "Md. Nazim Uddin Bhuiyan" },
-      { id: 11, name: "Md Sagor Khandakar" }, { id: 12, name: "Mohamad Safayet Khan" },
-      { id: 13, name: "Md Ali Afzal" }, { id: 14, name: "Mosharof Hossain" },
-      { id: 15, name: "Md. Lutfur Rahman (Rasel)" }
-    ];
-
-    const data = {
-      '2022': { members: membersList.map(m => {
-        const paidMap = { 3: 2000, 4: 12000, 5: 12000, 6: 7000, 8: 11000, 9: 12000, 10: 7000, 11: 12000, 12: 1000, 13: 12000, 14: 12000, 15: 6000 };
-        return { ...m, paid: paidMap[m.id] || 0 };
-      })},
-      '2023': { members: membersList.map(m => {
-        const paidMap = { 1: 1000, 2: 11000, 3: 11000, 4: 12000, 5: 12000, 6: 12000, 7: 4000, 8: 12000, 9: 12000, 10: 12000, 11: 10000, 12: 12000, 13: 12000, 14: 12000, 15: 0 };
-        return { ...m, paid: paidMap[m.id] || 0 };
-      })},
-      '2024': { members: membersList.map(m => {
-        const paidMap = { 4: 12000, 5: 12000, 8: 12000, 9: 11000, 10: 4000, 13: 12000, 14: 12000 };
-        return { ...m, paid: paidMap[m.id] || 0 };
-      })},
-      '2025': { members: membersList.map(m => {
-        const paidMap = { 4: 12000, 5: 12000, 13: 12000, 14: 10000 };
-        return { ...m, paid: paidMap[m.id] || 0 };
-      })},
-      '2026': { members: membersList.map(m => {
-        const paidMap = { 1: 4000, 2: 3000, 3: 4000, 4: 16000, 5: 16000, 6: 4000, 7: 4000, 8: 14000, 9: 4000, 10: 4000, 11: 4000, 12: 4000, 13: 5000, 14: 4000, 15: 4000 };
-        return { ...m, paid: paidMap[m.id] || 0 };
-      })}
-    };
-
-    for (const year in data) {
-      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'ledger', year), data[year]);
-    }
-  };
-
-  const years = Object.keys(yearlyData).sort();
-  const currentMembers = yearlyData[activeYear]?.members || [];
-
-  // বাৎসরিক স্ট্যাটস ক্যালকুলেশন
   const stats = useMemo(() => {
     const totalCollected = currentMembers.reduce((sum, m) => sum + (m.paid || 0), 0);
-    const totalDues = currentMembers.reduce((sum, m) => sum + Math.max(0, 12000 - (m.paid || 0)), 0);
+    const totalDues = currentMembers.length * 12000 - totalCollected;
     return { totalCollected, totalDues };
   }, [currentMembers]);
 
-  // এডিট হ্যান্ডলার
   const handleEditClick = (member) => {
     setEditingMember(member);
     setEditValue(member.paid.toString());
   };
 
-  const handleSaveEdit = async () => {
-    if (!user) return;
+  const handleSaveEdit = () => {
     const newValue = parseInt(editValue) || 0;
-    const updatedMembers = [...currentMembers];
-    const index = updatedMembers.findIndex(m => m.id === editingMember.id);
-    
-    if (index !== -1) {
-      updatedMembers[index].paid = newValue;
-      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'ledger', activeYear), {
-        members: updatedMembers
-      });
-    }
+    const updatedYear = currentMembers.map(m => 
+      m.id === editingMember.id ? { ...m, paid: newValue } : m
+    );
+    setLedgerData({ ...ledgerData, [activeYear]: updatedYear });
     setEditingMember(null);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-4">
-          <RefreshCw className="animate-spin text-rose-500" size={40} />
-          <p className="text-slate-600 font-bold">সার্ভার থেকে তথ্য লোড হচ্ছে...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 pb-24 font-sans text-slate-900">
-      {/* হেডার সেকশন */}
       <header className="bg-white border-b sticky top-0 z-10 px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="bg-rose-500 p-2 rounded-xl shadow-lg shadow-rose-200">
+            <div className="bg-rose-500 p-2 rounded-xl">
               <TrendingUp size={20} className="text-white" />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-slate-800 leading-none">স্পন্দন-০১ ডিজিটাল</h1>
-              <div className="flex items-center gap-1 mt-1">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">অনলাইন লাইভ</span>
-              </div>
-            </div>
+            <h1 className="text-lg font-bold text-slate-800">স্পন্দন-০১ খাতা</h1>
           </div>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setView(view === 'total' ? 'dashboard' : 'total')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                view === 'total' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'
-              }`}
-            >
-              {view === 'total' ? 'ফিরুন' : 'মোট সারাংশ'}
-            </button>
-          </div>
+          <button 
+            onClick={() => setView(view === 'total' ? 'dashboard' : 'total')}
+            className="px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-bold text-slate-600"
+          >
+            {view === 'total' ? 'ফিরুন' : 'সারাংশ'}
+          </button>
         </div>
         
         {view === 'dashboard' && (
@@ -206,7 +108,7 @@ const App = () => {
               <button
                 key={year}
                 onClick={() => setActiveYear(year)}
-                className={`px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+                className={`px-5 py-2 rounded-full text-xs font-bold border transition-all ${
                   activeYear === year ? 'bg-rose-500 text-white border-rose-500 shadow-md' : 'bg-white text-slate-500 border-slate-200'
                 }`}
               >
@@ -220,182 +122,75 @@ const App = () => {
       <main className="p-4 max-w-md mx-auto space-y-6">
         {view === 'dashboard' ? (
           <>
-            {/* বাৎসরিক কার্ড */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-emerald-500 p-4 rounded-3xl shadow-lg shadow-emerald-100 text-white">
-                <div className="flex items-center justify-between mb-2">
-                  <Wallet size={16} className="opacity-80" />
-                  <span className="text-[10px] font-bold uppercase opacity-80">{activeYear} সংগ্রহ</span>
-                </div>
+              <div className="bg-emerald-500 p-4 rounded-3xl text-white shadow-lg shadow-emerald-100">
+                <p className="text-[10px] font-bold opacity-80 uppercase">{activeYear} সংগ্রহ</p>
                 <p className="text-xl font-black">৳{stats.totalCollected.toLocaleString()}</p>
               </div>
-              <div className="bg-rose-500 p-4 rounded-3xl shadow-lg shadow-rose-100 text-white">
-                <div className="flex items-center justify-between mb-2">
-                  <Clock size={16} className="opacity-80" />
-                  <span className="text-[10px] font-bold uppercase opacity-80">{activeYear} বকেয়া</span>
-                </div>
-                <p className="text-xl font-black">৳{stats.totalDues.toLocaleString()}</p>
+              <div className="bg-rose-500 p-4 rounded-3xl text-white shadow-lg shadow-rose-100">
+                <p className="text-[10px] font-bold opacity-80 uppercase">{activeYear} বকেয়া</p>
+                <p className="text-xl font-black">৳{Math.max(0, stats.totalDues).toLocaleString()}</p>
               </div>
             </div>
 
-            {/* সদস্য তালিকা */}
-            <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-              <div className="p-6 border-b bg-slate-50/50 flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <Users size={18} className="text-rose-500" />
-                  <h3 className="font-bold text-slate-800">সদস্যের কিস্তি</h3>
-                </div>
-                <span className="text-[10px] bg-slate-200 text-slate-600 px-3 py-1 rounded-full font-bold">২০২২-২০২৬</span>
+            <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
+              <div className="p-6 border-b bg-slate-50/50 flex justify-between items-center font-bold text-sm">
+                সদস্যের কিস্তি তালিকা
               </div>
-              
               <div className="divide-y divide-slate-50">
-                {currentMembers.map((member) => {
-                  const due = Math.max(0, 12000 - member.paid);
-                  return (
-                    <div 
-                      key={member.id} 
-                      onClick={() => handleEditClick(member)}
-                      className="p-4 flex items-center justify-between hover:bg-slate-50 active:scale-[0.98] transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-lg ${due === 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>
-                          {member.name.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-sm text-slate-800">{member.name}</p>
-                          <p className="text-[11px] text-slate-400 font-medium">জমা: ৳{member.paid.toLocaleString()}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className={`text-sm font-black ${due > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                          {due > 0 ? `৳${due.toLocaleString()}` : 'পরিশোধিত'}
-                        </p>
-                        <Edit2 size={10} className="text-slate-300 ml-auto mt-1" />
+                {currentMembers.map((member) => (
+                  <div key={member.id} onClick={() => handleEditClick(member)} className="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-slate-500">{member.name.charAt(0)}</div>
+                      <div>
+                        <p className="font-bold text-sm text-slate-800">{member.name}</p>
+                        <p className="text-[10px] text-slate-400">জমা: ৳{member.paid}</p>
                       </div>
                     </div>
-                  );
-                })}
+                    <div className="text-right">
+                      <p className={`text-sm font-black ${12000 - member.paid > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                        ৳{(12000 - member.paid).toLocaleString()}
+                      </p>
+                      <Edit2 size={10} className="text-slate-300 ml-auto" />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </>
         ) : (
-          /* অল-টাইম সারাংশ ভিউ */
-          <div className="space-y-4 animate-in fade-in duration-500">
-            <div className="bg-slate-800 rounded-3xl p-6 text-white shadow-xl">
-              <h2 className="text-lg font-bold mb-1">সর্বমোট হিসাব সারাংশ</h2>
-              <p className="text-xs opacity-60 mb-4 tracking-wide">২০২১ - এপ্রিল ২০২৬ পর্যন্ত</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-[10px] uppercase font-bold opacity-50">মোট সংগৃহীত</p>
-                  <p className="text-2xl font-black text-emerald-400">৳৫,৩০,০০০</p>
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase font-bold opacity-50">মোট বকেয়া</p>
-                  <p className="text-2xl font-black text-rose-400">৳৪,৬০,০০০</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
-              <div className="p-5 border-b bg-slate-50 flex justify-between items-center">
-                <h3 className="font-bold text-sm">সদস্য ভিত্তিক বর্তমান বকেয়া</h3>
-                <Info size={14} className="text-slate-400" />
-              </div>
-              <div className="divide-y divide-slate-50">
-                {[
-                  { name: "Md. Tareq", paid: 15000, due: 51000 },
-                  { name: "Simon Hoque", paid: 14000, due: 52000 },
-                  { name: "Ismaiel Zabiullah", paid: 27000, due: 39000 },
-                  { name: "Zunaid Bhuiyan", paid: 66000, due: 0 },
-                  { name: "Enamul Hoque Rimon", paid: 66000, due: 0 },
-                  { name: "Md. Al Amin Robin", paid: 23000, due: 43000 },
-                  { name: "Sujan Khan", paid: 8000, due: 58000 },
-                  { name: "Rashedul Alam", paid: 49000, due: 17000 },
-                  { name: "Arif Chowdhury", paid: 39000, due: 27000 },
-                  { name: "Md. Nazim Uddin Bhuiyan", paid: 27000, due: 39000 },
-                  { name: "Md Sagor Khandakar", paid: 36000, due: 30000 },
-                  { name: "Mohamad Safayet Khan", paid: 17000, due: 49000 },
-                  { name: "Md Ali Afzal", paid: 63000, due: 3000 },
-                  { name: "Mosharof Hossain", paid: 60000, due: 6000 },
-                  { name: "Md. Lutfur Rahman (Rasel)", paid: 20000, due: 46000 }
-                ].map((m, idx) => (
-                  <div key={idx} className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="text-[10px] font-bold text-slate-300 w-4">{idx + 1}</div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-700">{m.name}</p>
-                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">মোট জমা: ৳{m.paid.toLocaleString()}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className={`text-xs font-black ${m.due > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                        {m.due > 0 ? `৳${m.due.toLocaleString()}` : 'ক্লিয়ার'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+            <h2 className="font-bold text-center mb-4">সর্বমোট বকেয়া রিপোর্ট</h2>
+            <div className="space-y-3">
+              <p className="text-xs text-slate-500 text-center italic">ছবি অনুযায়ী ২০২১-২০২৬ সারাংশ</p>
+              {/* Simplified total view for GitHub ease */}
+              <div className="p-4 bg-slate-900 rounded-2xl text-white text-center">
+                <p className="text-[10px] uppercase opacity-50">মোট সংগ্রহ</p>
+                <p className="text-2xl font-black">৳৫,৩০,০০০</p>
               </div>
             </div>
           </div>
         )}
       </main>
 
-      {/* এডিট মোডাল */}
       {editingMember && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-6">
-          <div className="bg-white rounded-[2rem] w-full max-w-xs overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="bg-rose-500 p-8 text-white text-center relative">
-              <button 
-                onClick={() => setEditingMember(null)}
-                className="absolute right-4 top-4 p-1 hover:bg-white/20 rounded-full transition-colors"
-              >
-                <X size={20} />
-              </button>
-              <div className="w-16 h-16 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl font-black">{editingMember.name.charAt(0)}</span>
-              </div>
-              <h3 className="text-lg font-black leading-tight">{editingMember.name}</h3>
-              <p className="text-[10px] opacity-70 font-bold mt-1 uppercase tracking-widest">{activeYear} সালের কিস্তি</p>
-            </div>
-            <div className="p-8 space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">জমা টাকা (৳)</label>
-                <input 
-                  type="number" 
-                  autoFocus
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 font-black text-2xl outline-none focus:border-rose-500 focus:bg-white transition-all text-center"
-                />
-              </div>
-              <button 
-                onClick={handleSaveEdit}
-                className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl shadow-slate-200"
-              >
-                <Save size={20} /> সেভ করুন
-              </button>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-[2rem] w-full max-w-xs p-8 space-y-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-center">{editingMember.name}</h3>
+            <input 
+              type="number" 
+              autoFocus
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl p-4 text-center text-2xl font-black outline-none focus:border-rose-500"
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setEditingMember(null)} className="flex-1 py-4 bg-slate-100 rounded-xl font-bold">বাতিল</button>
+              <button onClick={handleSaveEdit} className="flex-1 py-4 bg-rose-500 text-white rounded-xl font-bold shadow-lg shadow-rose-200">সেভ</button>
             </div>
           </div>
         </div>
       )}
-
-      {/* বটম নেভিগেশন */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-slate-100 px-12 py-5 flex justify-around items-center z-40">
-        <button 
-          onClick={() => setView('dashboard')}
-          className={`flex flex-col items-center gap-1.5 transition-all ${view === 'dashboard' ? 'text-rose-500 scale-110' : 'text-slate-400 hover:text-slate-600'}`}
-        >
-          <Wallet size={24} />
-          <span className="text-[10px] font-black uppercase tracking-tighter">বাৎসরিক</span>
-        </button>
-        <button 
-          onClick={() => setView('total')}
-          className={`flex flex-col items-center gap-1.5 transition-all ${view === 'total' ? 'text-slate-900 scale-110' : 'text-slate-400 hover:text-slate-600'}`}
-        >
-          <CheckCircle2 size={24} />
-          <span className="text-[10px] font-black uppercase tracking-tighter">সারাংশ</span>
-        </button>
-      </nav>
     </div>
   );
 };
