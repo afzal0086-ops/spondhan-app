@@ -1,0 +1,271 @@
+```html
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spondhan-01 Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .admin-only { display: none; }
+        .is-admin .admin-only { display: block; }
+    </style>
+</head>
+<body class="pb-28">
+
+    <!-- Header -->
+    <header class="bg-indigo-700 text-white p-6 sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-black">Spondhan-01</h1>
+                <div class="flex items-center gap-2">
+                    <div id="syncStatus" class="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                    <p id="statusText" class="text-[10px] font-bold uppercase tracking-widest opacity-80">লোডিং...</p>
+                </div>
+            </div>
+            <button id="adminBtn" onclick="askAdminAccess()" class="bg-white/10 p-2 rounded-xl border border-white/20">
+                <svg id="lockIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Summary -->
+    <main id="mainContent" class="container mx-auto p-4 max-w-2xl">
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-indigo-50">
+                <p class="text-xs text-gray-400 font-bold mb-1">মোট জমা</p>
+                <p class="text-xl font-black text-indigo-700" id="totalDeposit">৳ ০</p>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-indigo-50">
+                <p class="text-xs text-gray-400 font-bold mb-1">মোট সদস্য</p>
+                <p class="text-xl font-black text-gray-800" id="totalMembers">০</p>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mb-4 px-2">
+            <h2 class="font-black text-gray-800 text-lg">সদস্য তালিকা</h2>
+            <button onclick="toggleModal('memberModal')" class="admin-only bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-indigo-100">
+                + নতুন সদস্য
+            </button>
+        </div>
+
+        <div id="memberList" class="space-y-3"></div>
+    </main>
+
+    <!-- Report -->
+    <main id="reportContent" class="container mx-auto p-4 hidden">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-black text-gray-800">বার্ষিক রিপোর্ট</h2>
+            <button onclick="showPage('dashboard')" class="text-indigo-600 font-bold">হোমে ফিরুন</button>
+        </div>
+        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left min-w-[1000px]">
+                    <thead>
+                        <tr class="bg-indigo-50 text-indigo-900" id="reportHeader"></tr>
+                    </thead>
+                    <tbody id="reportTableBody" class="text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Navigation -->
+    <nav class="fixed bottom-6 left-6 right-6 h-16 glass rounded-2xl shadow-2xl border border-white/50 flex justify-around items-center z-40">
+        <button onclick="showPage('dashboard')" class="flex flex-col items-center text-indigo-600">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg>
+            <span class="text-[10px] font-bold mt-1">হোম</span>
+        </button>
+        <button onclick="showPage('report')" class="flex flex-col items-center text-gray-400">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span class="text-[10px] font-bold mt-1">রিপোর্ট</span>
+        </button>
+        <button onclick="toggleModal('settingsModal')" class="admin-only flex flex-col items-center text-gray-400">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
+            <span class="text-[10px] font-bold mt-1">সেটিংস</span>
+        </button>
+    </nav>
+
+    <!-- Modals -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-[60]">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6">
+            <h2 class="text-xl font-black mb-4">বছর যোগ করুন</h2>
+            <div id="yearTags" class="flex flex-wrap gap-2 mb-4"></div>
+            <div class="flex gap-2">
+                <input type="number" id="newYearInput" placeholder="উদা: ২০২৭" class="flex-1 bg-gray-100 p-3 rounded-xl border-none">
+                <button onclick="addNewYear()" class="bg-indigo-600 text-white px-4 rounded-xl font-bold">যোগ</button>
+            </div>
+            <button onclick="toggleModal('settingsModal')" class="w-full mt-4 text-gray-400 font-bold">বন্ধ করুন</button>
+        </div>
+    </div>
+
+    <div id="payModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-[60]">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6">
+            <h2 id="payMemberName" class="text-xl font-black mb-4">টাকা জমা</h2>
+            <form id="payForm" class="space-y-4">
+                <input type="hidden" id="payMemberId">
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="payYear" class="p-4 bg-gray-100 rounded-xl border-none font-bold"></select>
+                    <select id="payMonth" class="p-4 bg-gray-100 rounded-xl border-none font-bold">
+                        <option value="January">জানুয়ারি</option><option value="February">ফেব্রুয়ারি</option><option value="March">মার্চ</option>
+                        <option value="April">এপ্রিল</option><option value="May">মে</option><option value="June">জুন</option>
+                        <option value="July">জুলাই</option><option value="August">আগস্ট</option><option value="September">সেপ্টেম্বর</option>
+                        <option value="October">অক্টোবর</option><option value="November">নভেম্বর</option><option value="December">ডিসেম্বর</option>
+                    </select>
+                </div>
+                <input type="number" id="payAmount" value="1000" class="w-full p-4 bg-indigo-50 rounded-xl text-2xl font-black text-indigo-700 text-center">
+                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold">নিশ্চিত করুন</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="memberModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-[60]">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6">
+            <h2 class="text-xl font-black mb-4">নতুন সদস্য</h2>
+            <form id="memberForm" class="space-y-4">
+                <input type="text" id="mName" placeholder="সদস্যের নাম" required class="w-full p-4 bg-gray-100 rounded-xl">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="mShare" placeholder="শেয়ার" value="1" class="w-full p-4 bg-gray-100 rounded-xl">
+                    <input type="number" id="mAdd" placeholder="অতিরিক্ত জমা" value="0" class="w-full p-4 bg-gray-100 rounded-xl">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold">সেভ করুন</button>
+                <button type="button" onclick="toggleModal('memberModal')" class="w-full text-gray-400 font-bold">বাতিল</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, signInAnonymously, getAuth, onAuthStateChanged, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'spondhan-01';
+
+        let members = [];
+        let activeYears = [2021, 2022, 2023, 2024, 2025, 2026];
+        let isAdmin = false;
+        const ADMIN_PASS = "1234";
+
+        async function init() {
+            await signInAnonymously(auth);
+            setupListeners();
+        }
+
+        function setupListeners() {
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'members'), (snap) => {
+                members = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
+                renderMembers();
+                updateStats();
+                updateStatus("অনলাইন", "bg-emerald-500");
+                if(document.getElementById('reportContent').offsetParent) renderReport();
+            }, () => updateStatus("অফলাইন", "bg-red-500"));
+
+            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'config'), (d) => {
+                if(d.exists()) {
+                    activeYears = d.data().years || activeYears;
+                    renderYearTags(); populateYearOptions();
+                } else {
+                    setDoc(d.ref, { years: activeYears });
+                }
+            });
+        }
+
+        window.askAdminAccess = function() {
+            if(isAdmin) { isAdmin = false; document.body.classList.remove('is-admin'); return; }
+            if(prompt("পাসওয়ার্ড দিন:") === ADMIN_PASS) {
+                isAdmin = true;
+                document.body.classList.add('is-admin');
+            }
+        };
+
+        window.renderMembers = function() {
+            const list = document.getElementById('memberList');
+            list.innerHTML = members.map((m, i) => {
+                const total = (m.additional || 0) + Object.values(m.payments || {}).reduce((a, b) => a + b, 0);
+                return `
+                    <div class="bg-white p-5 rounded-3xl shadow-sm flex justify-between items-center border border-gray-50 cursor-pointer" onclick="if(isAdmin) openPayModal('${m.docId}')">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 font-black">${i+1}</div>
+                            <div><h3 class="font-bold text-gray-800">${m.name}</h3><p class="text-[10px] text-gray-400 font-bold uppercase">জমা: ৳${m.additional}</p></div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-black text-indigo-700">৳${total.toLocaleString()}</p>
+                            <span class="text-[9px] text-gray-300 font-bold uppercase tracking-widest">${isAdmin ? 'টাকা জমা নিন' : 'মোট জমা'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        window.renderReport = function() {
+            const header = document.getElementById('reportHeader');
+            const tbody = document.getElementById('reportTableBody');
+            const yrs = [...activeYears].sort((a,b)=>a-b);
+            header.innerHTML = '<th class="p-4 border-b">নাম</th>' + yrs.map(y => `<th class="p-4 border-b text-center">${y}</th>`).join('') + '<th class="p-4 border-b text-right">মোট</th>';
+            tbody.innerHTML = members.map(m => {
+                let grand = (m.additional || 0) + Object.values(m.payments || {}).reduce((a,b)=>a+b, 0);
+                return `<tr><td class="p-4 font-bold border-b">${m.name}</td>` + yrs.map(y => {
+                    let s = 0; for(let k in m.payments) if(k.startsWith(y)) s += m.payments[k];
+                    return `<td class="p-4 text-center border-b text-gray-500">৳${s}</td>`;
+                }).join('') + `<td class="p-4 text-right border-b font-black text-indigo-700">৳${grand.toLocaleString()}</td></tr>`;
+            }).join('');
+        };
+
+        window.addNewYear = async function() {
+            const y = parseInt(document.getElementById('newYearInput').value);
+            if(y && !activeYears.includes(y)) {
+                activeYears.push(y);
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'config'), { years: activeYears });
+            }
+        };
+
+        document.getElementById('memberForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const nm = { name: document.getElementById('mName').value, share: parseInt(document.getElementById('mShare').value), additional: parseInt(document.getElementById('mAdd').value), payments: {} };
+            await setDoc(doc(collection(db, 'artifacts', appId, 'public', 'data', 'members')), nm);
+            toggleModal('memberModal'); e.target.reset();
+        };
+
+        document.getElementById('payForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('payMemberId').value;
+            const m = members.find(x => x.docId === id);
+            const key = `${document.getElementById('payYear').value}_${document.getElementById('payMonth').value}`;
+            const pay = { ...m.payments }; pay[key] = (pay[key] || 0) + parseInt(document.getElementById('payAmount').value);
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'members', id), { payments: pay });
+            toggleModal('payModal');
+        };
+
+        window.toggleModal = (id) => document.getElementById(id).classList.toggle('hidden');
+        window.showPage = (p) => { 
+            document.getElementById('mainContent').classList.toggle('hidden', p==='report'); 
+            document.getElementById('reportContent').classList.toggle('hidden', p!=='report'); 
+            if(p==='report') renderReport(); 
+        };
+        window.openPayModal = (id) => { 
+            const m = members.find(x => x.docId === id); 
+            document.getElementById('payMemberName').innerText = m.name; 
+            document.getElementById('payMemberId').value = id; 
+            toggleModal('payModal'); 
+        };
+        function updateStats() {
+            const total = members.reduce((s, m) => s + (m.additional || 0) + Object.values(m.payments || {}).reduce((a,b)=>a+b, 0), 0);
+            document.getElementById('totalDeposit').innerText = `৳ ${total.toLocaleString()}`;
+            document.getElementById('totalMembers').innerText = members.length;
+        }
+        function updateStatus(t, c) { document.getElementById('syncStatus').className = `w-2 h-2 rounded-full ${c}`; document.getElementById('statusText').innerText = t; }
+        function renderYearTags() { document.getElementById('yearTags').innerHTML = activeYears.map(y => `<span class="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-xs font-bold">${y}</span>`).join(''); }
+        function populateYearOptions() { document.getElementById('payYear').innerHTML = activeYears.sort((a,b)=>b-a).map(y => `<option value="${y}">${y}</option>`).join(''); }
+
+        init();
+    </script>
+</body>
+</html>
+
+```
