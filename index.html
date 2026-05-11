@@ -1,200 +1,113 @@
-```react
-import React, { useState, useMemo } from 'react';
-import { 
-  Users, 
-  Wallet, 
-  Clock, 
-  Calendar, 
-  Plus,
-  Save,
-  X,
-  TrendingUp,
-  Edit2,
-  Info,
-  CheckCircle2
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spondhan-01 Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="p-4">
 
-const App = () => {
-  const [activeYear, setActiveYear] = useState('2026');
-  const [view, setView] = useState('dashboard');
-  const [editingMember, setEditingMember] = useState(null);
-  const [editValue, setEditValue] = useState('');
-
-  // Initial data based on your uploaded images
-  const [ledgerData, setLedgerData] = useState({
-    '2022': [
-      { id: 1, name: "Md. Tareq", paid: 0 }, { id: 2, name: "Simon Hoque", paid: 0 },
-      { id: 3, name: "Ismaiel Zabiullah", paid: 2000 }, { id: 4, name: "Zunaid Bhuiyan", paid: 12000 },
-      { id: 5, name: "Enamul Hoque Rimon", paid: 12000 }, { id: 6, name: "Md. Al Amin Robin", paid: 7000 },
-      { id: 7, name: "Sujan Khan", paid: 0 }, { id: 8, name: "Rashedul Alam", paid: 11000 },
-      { id: 9, name: "Arif Chowdhury", paid: 12000 }, { id: 10, name: "Md. Nazim Uddin Bhuiyan", paid: 7000 },
-      { id: 11, name: "Md Sagor Khandakar", paid: 12000 }, { id: 12, name: "Mohamad Safayet Khan", paid: 1000 },
-      { id: 13, name: "Md Ali Afzal", paid: 12000 }, { id: 14, name: "Mosharof Hossain", paid: 12000 },
-      { id: 15, name: "Md. Lutfur Rahman (Rasel)", paid: 6000 }
-    ],
-    '2023': [
-      { id: 1, name: "Md. Tareq", paid: 1000 }, { id: 2, name: "Simon Hoque", paid: 11000 },
-      { id: 3, name: "Ismaiel Zabiullah", paid: 11000 }, { id: 4, name: "Zunaid Bhuiyan", paid: 12000 },
-      { id: 5, name: "Enamul Hoque Rimon", paid: 12000 }, { id: 6, name: "Md. Al Amin Robin", paid: 12000 },
-      { id: 7, name: "Sujan Khan", paid: 4000 }, { id: 8, name: "Rashedul Alam", paid: 12000 },
-      { id: 9, name: "Arif Chowdhury", paid: 12000 }, { id: 10, name: "Md. Nazim Uddin Bhuiyan", paid: 12000 },
-      { id: 11, name: "Md Sagor Khandakar", paid: 10000 }, { id: 12, name: "Mohamad Safayet Khan", paid: 12000 },
-      { id: 13, name: "Md Ali Afzal", paid: 12000 }, { id: 14, name: "Mosharof Hossain", paid: 12000 },
-      { id: 15, name: "Md. Lutfur Rahman (Rasel)", paid: 0 }
-    ],
-    '2024': [
-      { id: 1, name: "Md. Tareq", paid: 0 }, { id: 2, name: "Simon Hoque", paid: 0 },
-      { id: 4, name: "Zunaid Bhuiyan", paid: 12000 }, { id: 5, name: "Enamul Hoque Rimon", paid: 12000 },
-      { id: 8, name: "Rashedul Alam", paid: 12000 }, { id: 9, name: "Arif Chowdhury", paid: 11000 },
-      { id: 10, name: "Md. Nazim Uddin Bhuiyan", paid: 4000 }, { id: 13, name: "Md Ali Afzal", paid: 12000 },
-      { id: 14, name: "Mosharof Hossain", paid: 12000 }
-    ],
-    '2026': [
-      { id: 1, name: "Md. Tareq", paid: 4000 }, { id: 2, name: "Simon Hoque", paid: 3000 },
-      { id: 3, name: "Ismaiel Zabiullah", paid: 4000 }, { id: 4, name: "Zunaid Bhuiyan", paid: 16000 },
-      { id: 5, name: "Enamul Hoque Rimon", paid: 16000 }, { id: 6, name: "Md. Al Amin Robin", paid: 4000 },
-      { id: 7, name: "Sujan Khan", paid: 4000 }, { id: 8, name: "Rashedul Alam", paid: 14000 },
-      { id: 9, name: "Arif Chowdhury", paid: 4000 }, { id: 10, name: "Md. Nazim Uddin Bhuiyan", paid: 4000 },
-      { id: 11, name: "Md Sagor Khandakar", paid: 4000 }, { id: 12, name: "Mohamad Safayet Khan", paid: 4000 },
-      { id: 13, name: "Md Ali Afzal", paid: 5000 }, { id: 14, name: "Mosharof Hossain", paid: 4000 },
-      { id: 15, name: "Md. Lutfur Rahman (Rasel)", paid: 4000 }
-    ]
-  });
-
-  const years = Object.keys(ledgerData).sort();
-  const currentMembers = ledgerData[activeYear] || [];
-
-  const stats = useMemo(() => {
-    const totalCollected = currentMembers.reduce((sum, m) => sum + (m.paid || 0), 0);
-    const totalDues = currentMembers.length * 12000 - totalCollected;
-    return { totalCollected, totalDues };
-  }, [currentMembers]);
-
-  const handleEditClick = (member) => {
-    setEditingMember(member);
-    setEditValue(member.paid.toString());
-  };
-
-  const handleSaveEdit = () => {
-    const newValue = parseInt(editValue) || 0;
-    const updatedYear = currentMembers.map(m => 
-      m.id === editingMember.id ? { ...m, paid: newValue } : m
-    );
-    setLedgerData({ ...ledgerData, [activeYear]: updatedYear });
-    setEditingMember(null);
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 pb-24 font-sans text-slate-900">
-      <header className="bg-white border-b sticky top-0 z-10 px-4 py-3 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="bg-rose-500 p-2 rounded-xl">
-              <TrendingUp size={20} className="text-white" />
-            </div>
-            <h1 className="text-lg font-bold text-slate-800">স্পন্দন-০১ খাতা</h1>
-          </div>
-          <button 
-            onClick={() => setView(view === 'total' ? 'dashboard' : 'total')}
-            className="px-3 py-1.5 bg-slate-100 rounded-lg text-xs font-bold text-slate-600"
-          >
-            {view === 'total' ? 'ফিরুন' : 'সারাংশ'}
-          </button>
-        </div>
-        
-        {view === 'dashboard' && (
-          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-            {years.map(year => (
-              <button
-                key={year}
-                onClick={() => setActiveYear(year)}
-                className={`px-5 py-2 rounded-full text-xs font-bold border transition-all ${
-                  activeYear === year ? 'bg-rose-500 text-white border-rose-500 shadow-md' : 'bg-white text-slate-500 border-slate-200'
-                }`}
-              >
-                {year} সাল
-              </button>
-            ))}
-          </div>
-        )}
-      </header>
-
-      <main className="p-4 max-w-md mx-auto space-y-6">
-        {view === 'dashboard' ? (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-emerald-500 p-4 rounded-3xl text-white shadow-lg shadow-emerald-100">
-                <p className="text-[10px] font-bold opacity-80 uppercase">{activeYear} সংগ্রহ</p>
-                <p className="text-xl font-black">৳{stats.totalCollected.toLocaleString()}</p>
-              </div>
-              <div className="bg-rose-500 p-4 rounded-3xl text-white shadow-lg shadow-rose-100">
-                <p className="text-[10px] font-bold opacity-80 uppercase">{activeYear} বকেয়া</p>
-                <p className="text-xl font-black">৳{Math.max(0, stats.totalDues).toLocaleString()}</p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden shadow-sm">
-              <div className="p-6 border-b bg-slate-50/50 flex justify-between items-center font-bold text-sm">
-                সদস্যের কিস্তি তালিকা
-              </div>
-              <div className="divide-y divide-slate-50">
-                {currentMembers.map((member) => (
-                  <div key={member.id} onClick={() => handleEditClick(member)} className="p-4 flex items-center justify-between hover:bg-slate-50 cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-slate-500">{member.name.charAt(0)}</div>
-                      <div>
-                        <p className="font-bold text-sm text-slate-800">{member.name}</p>
-                        <p className="text-[10px] text-slate-400">জমা: ৳{member.paid}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className={`text-sm font-black ${12000 - member.paid > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                        ৳{(12000 - member.paid).toLocaleString()}
-                      </p>
-                      <Edit2 size={10} className="text-slate-300 ml-auto" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-            <h2 className="font-bold text-center mb-4">সর্বমোট বকেয়া রিপোর্ট</h2>
-            <div className="space-y-3">
-              <p className="text-xs text-slate-500 text-center italic">ছবি অনুযায়ী ২০২১-২০২৬ সারাংশ</p>
-              {/* Simplified total view for GitHub ease */}
-              <div className="p-4 bg-slate-900 rounded-2xl text-white text-center">
-                <p className="text-[10px] uppercase opacity-50">মোট সংগ্রহ</p>
-                <p className="text-2xl font-black">৳৫,৩০,০০০</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-
-      {editingMember && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-white rounded-[2rem] w-full max-w-xs p-8 space-y-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-center">{editingMember.name}</h3>
-            <input 
-              type="number" 
-              autoFocus
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl p-4 text-center text-2xl font-black outline-none focus:border-rose-500"
-            />
-            <div className="flex gap-2">
-              <button onClick={() => setEditingMember(null)} className="flex-1 py-4 bg-slate-100 rounded-xl font-bold">বাতিল</button>
-              <button onClick={handleSaveEdit} className="flex-1 py-4 bg-rose-500 text-white rounded-xl font-bold shadow-lg shadow-rose-200">সেভ</button>
-            </div>
-          </div>
-        </div>
-      )}
+    <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-red-600">Spondhan-01</h1>
+        <p class="text-gray-600 text-sm">Monthly Installment Statement - 2026</p>
     </div>
-  );
-};
 
-export default App;
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="card p-4 text-center border-l-4 border-green-500">
+            <p class="text-xs uppercase text-gray-500 font-bold">Total Amount</p>
+            <p id="grandTotal" class="text-xl font-bold text-gray-800">৳ 0.00</p>
+        </div>
+        <div class="card p-4 text-center border-l-4 border-red-500">
+            <p class="text-xs uppercase text-gray-500 font-bold">Total Dues</p>
+            <p id="totalDues" class="text-xl font-bold text-gray-800">৳ 0.00</p>
+        </div>
+    </div>
 
-```
+    <div class="space-y-4" id="memberList">
+        </div>
+
+    <div class="fixed bottom-6 right-6">
+        <button onclick="saveData()" class="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700">
+            <i class="fas fa-save"></i> Save Data
+        </button>
+    </div>
+
+    <script>
+        // আপনার ইমেজ অনুযায়ী মেম্বার লিস্ট
+        const members = [
+            { id: 1, name: "Md. Tareq", paid: 15000, target: 66000 },
+            { id: 2, name: "Simon Hoque", paid: 14000, target: 66000 },
+            { id: 3, name: "Ismaiel Zabiullah", paid: 27000, target: 66000 },
+            { id: 4, name: "Zunaid Bhuiyan", paid: 66000, target: 66000 },
+            { id: 5, name: "Enamul Hoque Rimon", paid: 66000, target: 66000 },
+            { id: 13, name: "Md Ali Afzal", paid: 63000, target: 66000 },
+            // এখানে অন্য সব মেম্বারদের নাম যোগ করা যাবে...
+        ];
+
+        function renderMembers() {
+            const listContainer = document.getElementById('memberList');
+            let grandTotal = 0;
+            let totalDues = 0;
+
+            listContainer.innerHTML = '';
+
+            members.forEach(m => {
+                const dues = m.target - m.paid;
+                grandTotal += m.paid;
+                totalDues += dues;
+
+                listContainer.innerHTML += `
+                    <div class="card p-4 flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-gray-700">${m.name}</p>
+                            <p class="text-xs text-gray-500 italic">Target: ৳${m.target}</p>
+                        </div>
+                        <div class="text-right">
+                            <input type="number" onchange="updatePaid(${m.id}, this.value)" 
+                                value="${m.paid}" 
+                                class="w-24 border rounded px-2 py-1 text-sm text-right font-semibold text-green-600">
+                            <p class="text-xs ${dues > 0 ? 'text-red-500' : 'text-gray-400'} mt-1">
+                                Dues: ৳${dues}
+                            </p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('grandTotal').innerText = '৳ ' + grandTotal.toLocaleString();
+            document.getElementById('totalDues').innerText = '৳ ' + totalDues.toLocaleString();
+        }
+
+        function updatePaid(id, val) {
+            const member = members.find(m => m.id === id);
+            if(member) member.paid = parseFloat(val) || 0;
+            renderMembers();
+        }
+
+        function saveData() {
+            localStorage.setItem('spondhanData', JSON.stringify(members));
+            alert('আপনার ডেটা মোবাইলে সেভ হয়েছে!');
+        }
+
+        // Load data on start
+        window.onload = () => {
+            const saved = localStorage.getItem('spondhanData');
+            if(saved) {
+                const parsed = JSON.parse(saved);
+                // Update local array with saved values
+                parsed.forEach(p => {
+                    const m = members.find(mem => mem.id === p.id);
+                    if(m) m.paid = p.paid;
+                });
+            }
+            renderMembers();
+        };
+    </script>
+</body>
+</html>
