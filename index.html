@@ -4,266 +4,346 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spondhan-01 Cloud</title>
+    <title>Spondhan-01 Admin Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
         .admin-only { display: none; }
         .is-admin .admin-only { display: block; }
+        .tab-active { border-bottom: 3px solid #4338ca; color: #4338ca; }
     </style>
 </head>
 <body class="pb-28">
 
-    <!-- Header -->
     <header class="bg-indigo-700 text-white p-6 sticky top-0 z-50 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-black">Spondhan-01</h1>
-                <div class="flex items-center gap-2">
-                    <div id="syncStatus" class="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                    <p id="statusText" class="text-[10px] font-bold uppercase tracking-widest opacity-80">লোডিং...</p>
-                </div>
+                <h1 class="text-2xl font-black italic">Spondhan-01</h1>
+                <p class="text-[10px] font-bold uppercase opacity-80 tracking-widest">ম্যানেজমেন্ট সিস্টেম</p>
             </div>
-            <button id="adminBtn" onclick="askAdminAccess()" class="bg-white/10 p-2 rounded-xl border border-white/20">
+            <button id="adminBtn" onclick="askAdminAccess()" class="bg-white/10 p-2 rounded-xl border border-white/20 transition-all active:scale-95">
                 <svg id="lockIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
             </button>
         </div>
     </header>
 
-    <!-- Summary -->
     <main id="mainContent" class="container mx-auto p-4 max-w-2xl">
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="bg-white p-5 rounded-3xl shadow-sm border border-indigo-50">
-                <p class="text-xs text-gray-400 font-bold mb-1">মোট জমা</p>
-                <p class="text-xl font-black text-indigo-700" id="totalDeposit">৳ ০</p>
-            </div>
-            <div class="bg-white p-5 rounded-3xl shadow-sm border border-indigo-50">
-                <p class="text-xs text-gray-400 font-bold mb-1">মোট সদস্য</p>
-                <p class="text-xl font-black text-gray-800" id="totalMembers">০</p>
+        <div class="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[2rem] p-6 text-white mb-6 shadow-xl relative overflow-hidden">
+            <div class="relative z-10">
+                <p class="text-indigo-100 text-xs font-bold mb-1 opacity-80">সর্বমোট জমা (Grand Total)</p>
+                <h2 class="text-4xl font-black mb-4" id="totalDeposit">৳ ০</h2>
+                <div class="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
+                    <div>
+                        <p class="text-[10px] text-indigo-200 font-bold uppercase">সদস্য সংখ্যা</p>
+                        <p class="text-lg font-bold" id="totalMembers">০ জন</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] text-indigo-200 font-bold uppercase">বকেয়া (Dues)</p>
+                        <p class="text-lg font-bold text-orange-300" id="totalDues">৳ ০</p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="flex justify-between items-center mb-4 px-2">
-            <h2 class="font-black text-gray-800 text-lg">সদস্য তালিকা</h2>
-            <button onclick="toggleModal('memberModal')" class="admin-only bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-indigo-100">
-                + নতুন সদস্য
-            </button>
+        <div class="flex gap-6 mb-6 px-2 border-b overflow-x-auto">
+            <button onclick="showSubPage('list')" id="tab-list" class="pb-2 font-bold text-sm tab-active whitespace-nowrap">সদস্য তালিকা</button>
+            <button onclick="showSubPage('dues')" id="tab-dues" class="pb-2 font-bold text-sm text-gray-400 whitespace-nowrap">বকেয়া তালিকা</button>
+            <button onclick="showSubPage('settings')" id="tab-settings" class="admin-only pb-2 font-bold text-sm text-gray-400 whitespace-nowrap">সেটিংস</button>
         </div>
 
-        <div id="memberList" class="space-y-3"></div>
+        <div id="sub-list" class="space-y-3">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="font-black text-gray-800">সদস্যদের হিসাব</h2>
+                <button onclick="toggleModal('memberModal')" class="admin-only bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-transform active:scale-95">+ নতুন মেম্বার</button>
+            </div>
+            <div id="memberList" class="space-y-3"></div>
+        </div>
+
+        <div id="sub-dues" class="hidden space-y-3">
+             <div id="duesList" class="space-y-3"></div>
+        </div>
+
+        <div id="sub-settings" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-3xl border border-indigo-50 shadow-sm">
+                <h3 class="font-black text-gray-800 mb-4">বছর ব্যবস্থাপনা</h3>
+                <div class="flex gap-2 mb-4">
+                    <input type="number" id="newYearInput" placeholder="উদা: ২০২৭" class="flex-1 p-3 bg-gray-100 rounded-xl font-bold border-none">
+                    <button onclick="addNewYear()" class="bg-indigo-600 text-white px-6 rounded-xl font-bold">যোগ করুন</button>
+                </div>
+                <div id="yearsList" class="flex flex-wrap gap-2"></div>
+            </div>
+        </div>
     </main>
 
-    <!-- Report -->
     <main id="reportContent" class="container mx-auto p-4 hidden">
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-black text-gray-800">বার্ষিক রিপোর্ট</h2>
-            <button onclick="showPage('dashboard')" class="text-indigo-600 font-bold">হোমে ফিরুন</button>
+            <h2 class="text-2xl font-black text-gray-800">ফুল স্টেটমেন্ট</h2>
+            <button onclick="showPage('dashboard')" class="text-indigo-600 font-bold text-sm">ড্যাশবোর্ডে ফিরুন</button>
         </div>
-        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left min-w-[1000px]">
-                    <thead>
-                        <tr class="bg-indigo-50 text-indigo-900" id="reportHeader"></tr>
-                    </thead>
-                    <tbody id="reportTableBody" class="text-sm"></tbody>
-                </table>
-            </div>
+        <div class="bg-white rounded-3xl shadow-xl overflow-x-auto border border-gray-100">
+            <table class="w-full text-left min-w-[1200px]">
+                <thead><tr class="bg-indigo-50 text-indigo-900" id="reportHeader"></tr></thead>
+                <tbody id="reportTableBody" class="text-sm"></tbody>
+            </table>
         </div>
     </main>
 
-    <!-- Navigation -->
-    <nav class="fixed bottom-6 left-6 right-6 h-16 glass rounded-2xl shadow-2xl border border-white/50 flex justify-around items-center z-40">
-        <button onclick="showPage('dashboard')" class="flex flex-col items-center text-indigo-600">
+    <nav class="fixed bottom-6 left-6 right-6 h-16 bg-white/95 backdrop-blur rounded-2xl shadow-2xl border flex justify-around items-center z-40">
+        <button onclick="showPage('dashboard')" id="nav-home" class="flex flex-col items-center text-indigo-600 transition-all">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg>
             <span class="text-[10px] font-bold mt-1">হোম</span>
         </button>
-        <button onclick="showPage('report')" class="flex flex-col items-center text-gray-400">
+        <button onclick="showPage('report')" id="nav-report" class="flex flex-col items-center text-gray-400 transition-all">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             <span class="text-[10px] font-bold mt-1">রিপোর্ট</span>
         </button>
-        <button onclick="toggleModal('settingsModal')" class="admin-only flex flex-col items-center text-gray-400">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
-            <span class="text-[10px] font-bold mt-1">সেটিংস</span>
-        </button>
     </nav>
 
-    <!-- Modals -->
-    <div id="settingsModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-[60]">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6">
-            <h2 class="text-xl font-black mb-4">বছর যোগ করুন</h2>
-            <div id="yearTags" class="flex flex-wrap gap-2 mb-4"></div>
-            <div class="flex gap-2">
-                <input type="number" id="newYearInput" placeholder="উদা: ২০২৭" class="flex-1 bg-gray-100 p-3 rounded-xl border-none">
-                <button onclick="addNewYear()" class="bg-indigo-600 text-white px-4 rounded-xl font-bold">যোগ</button>
-            </div>
-            <button onclick="toggleModal('settingsModal')" class="w-full mt-4 text-gray-400 font-bold">বন্ধ করুন</button>
+    <div id="memberModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-[60]">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+            <h2 class="text-xl font-black mb-4 text-gray-800">নতুন সদস্য যোগ</h2>
+            <form id="memberForm" class="space-y-4">
+                <input type="text" id="mName" placeholder="সদস্যের নাম" required class="w-full p-4 bg-gray-100 rounded-xl border-none">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="mAdd" placeholder="অতিরিক্ত জমা" value="0" class="w-full p-4 bg-gray-100 rounded-xl border-none">
+                    <input type="number" id="mDue" placeholder="বকেয়া টাকা" value="0" class="w-full p-4 bg-gray-100 rounded-xl border-none">
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="toggleModal('memberModal')" class="flex-1 bg-gray-100 text-gray-500 py-4 rounded-xl font-bold">বাতিল</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold">সেভ করুন</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <div id="payModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-[60]">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6">
-            <h2 id="payMemberName" class="text-xl font-black mb-4">টাকা জমা</h2>
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+            <h2 id="payMemberName" class="text-xl font-black mb-4 text-gray-800">টাকা জমা</h2>
             <form id="payForm" class="space-y-4">
-                <input type="hidden" id="payMemberId">
+                <input type="hidden" id="payMemberIdx">
                 <div class="grid grid-cols-2 gap-3">
-                    <select id="payYear" class="p-4 bg-gray-100 rounded-xl border-none font-bold"></select>
-                    <select id="payMonth" class="p-4 bg-gray-100 rounded-xl border-none font-bold">
+                    <select id="payYear" class="w-full p-3 bg-gray-100 rounded-xl font-bold border-none"></select>
+                    <select id="payMonth" class="w-full p-3 bg-gray-100 rounded-xl font-bold border-none">
                         <option value="January">জানুয়ারি</option><option value="February">ফেব্রুয়ারি</option><option value="March">মার্চ</option>
                         <option value="April">এপ্রিল</option><option value="May">মে</option><option value="June">জুন</option>
                         <option value="July">জুলাই</option><option value="August">আগস্ট</option><option value="September">সেপ্টেম্বর</option>
                         <option value="October">অক্টোবর</option><option value="November">নভেম্বর</option><option value="December">ডিসেম্বর</option>
                     </select>
                 </div>
-                <input type="number" id="payAmount" value="1000" class="w-full p-4 bg-indigo-50 rounded-xl text-2xl font-black text-indigo-700 text-center">
-                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold">নিশ্চিত করুন</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="memberModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-[60]">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6">
-            <h2 class="text-xl font-black mb-4">নতুন সদস্য</h2>
-            <form id="memberForm" class="space-y-4">
-                <input type="text" id="mName" placeholder="সদস্যের নাম" required class="w-full p-4 bg-gray-100 rounded-xl">
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="number" id="mShare" placeholder="শেয়ার" value="1" class="w-full p-4 bg-gray-100 rounded-xl">
-                    <input type="number" id="mAdd" placeholder="অতিরিক্ত জমা" value="0" class="w-full p-4 bg-gray-100 rounded-xl">
+                <input type="number" id="payAmount" value="1000" class="w-full p-4 bg-indigo-50 rounded-xl text-3xl font-black text-center text-indigo-700 border-none">
+                <div class="flex gap-2">
+                    <button type="button" onclick="toggleModal('payModal')" class="flex-1 bg-gray-100 text-gray-500 py-4 rounded-xl font-bold">বাতিল</button>
+                    <button type="submit" class="flex-2 bg-indigo-600 text-white py-4 px-8 rounded-xl font-bold shadow-lg shadow-indigo-200">জমা দিন</button>
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold">সেভ করুন</button>
-                <button type="button" onclick="toggleModal('memberModal')" class="w-full text-gray-400 font-bold">বাতিল</button>
             </form>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, signInAnonymously, getAuth, onAuthStateChanged, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        // আপনার এক্সেল শিট থেকে পাওয়া মূল ডাটা
+        const defaultData = [
+            { name: "Md. Tareq", additional: 10000, dues: 51000, payments: {"2021_Total": 4000, "2023_Total": 1000} },
+            { name: "Simon Hoque", additional: 0, dues: 52000, payments: {"2021_Total": 3000, "2023_Total": 11000} },
+            { name: "Ismaiel Zabiullah", additional: 10000, dues: 39000, payments: {"2021_Total": 4000, "2022_Total": 2000, "2023_Total": 11000} },
+            { name: "Zunaid Bhuiyan", additional: 10000, dues: 0, payments: {"2021_Total": 4000, "2022_Total": 12000, "2023_Total": 12000, "2024_Total": 12000, "2025_Total": 12000, "2026_January": 1000, "2026_February": 1000, "2026_March": 1000, "2026_April": 1000} },
+            { name: "Enamul Hoque Rimon", additional: 10000, dues: 0, payments: {"2021_Total": 4000, "2022_Total": 12000, "2023_Total": 12000, "2024_Total": 12000, "2025_Total": 12000, "2026_January": 1000, "2026_February": 1000, "2026_March": 1000, "2026_April": 1000} },
+            { name: "Md. Al Amin Robin", additional: 0, dues: 43000, payments: {"2021_Total": 4000, "2022_Total": 7000, "2023_Total": 12000} },
+            { name: "Sujan Khan", additional: 0, dues: 58000, payments: {"2021_Total": 4000, "2023_Total": 4000} },
+            { name: "Rashedul Alam", additional: 10000, dues: 17000, payments: {"2021_Total": 4000, "2022_Total": 11000, "2023_Total": 12000, "2024_Total": 12000} },
+            { name: "Arif Chowdhury", additional: 0, dues: 27000, payments: {"2021_Total": 4000, "2022_Total": 12000, "2023_Total": 12000, "2024_Total": 11000} },
+            { name: "Md. Nazim Uddin Bhuiyan", additional: 0, dues: 39000, payments: {"2021_Total": 4000, "2022_Total": 7000, "2023_Total": 12000, "2024_Total": 4000} },
+            { name: "Md Sagor Khandakar", additional: 10000, dues: 30000, payments: {"2021_Total": 4000, "2022_Total": 12000, "2023_Total": 10000} },
+            { name: "Mohamad Safayet Khan", additional: 0, dues: 49000, payments: {"2021_Total": 4000, "2022_Total": 1000, "2023_Total": 12000} },
+            { name: "Md Al Afzal", additional: 10000, dues: 3000, payments: {"2021_Total": 4000, "2022_Total": 12000, "2023_Total": 12000, "2024_Total": 12000, "2025_Total": 12000, "2026_January": 1000} },
+            { name: "Mosharof Hossain", additional: 10000, dues: 6000, payments: {"2021_Total": 4000, "2022_Total": 12000, "2023_Total": 12000, "2024_Total": 12000, "2025_Total": 10000} },
+            { name: "Md. Lutfur Rahman (Rasel)", additional: 10000, dues: 46000, payments: {"2021_Total": 4000, "2022_Total": 6000} }
+        ];
 
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'spondhan-01';
-
-        let members = [];
-        let activeYears = [2021, 2022, 2023, 2024, 2025, 2026];
+        let members = JSON.parse(localStorage.getItem('spondhan_data')) || defaultData;
+        let activeYears = JSON.parse(localStorage.getItem('spondhan_years')) || [2021, 2022, 2023, 2024, 2025, 2026];
         let isAdmin = false;
-        const ADMIN_PASS = "1234";
 
-        async function init() {
-            await signInAnonymously(auth);
-            setupListeners();
-        }
-
-        function setupListeners() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'members'), (snap) => {
-                members = snap.docs.map(d => ({ docId: d.id, ...d.data() }));
-                renderMembers();
-                updateStats();
-                updateStatus("অনলাইন", "bg-emerald-500");
-                if(document.getElementById('reportContent').offsetParent) renderReport();
-            }, () => updateStatus("অফলাইন", "bg-red-500"));
-
-            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'config'), (d) => {
-                if(d.exists()) {
-                    activeYears = d.data().years || activeYears;
-                    renderYearTags(); populateYearOptions();
-                } else {
-                    setDoc(d.ref, { years: activeYears });
-                }
-            });
+        function save() {
+            localStorage.setItem('spondhan_data', JSON.stringify(members));
+            localStorage.setItem('spondhan_years', JSON.stringify(activeYears));
+            renderMembers();
+            renderDues();
+            updateStats();
+            renderYearsSettings();
         }
 
         window.askAdminAccess = function() {
-            if(isAdmin) { isAdmin = false; document.body.classList.remove('is-admin'); return; }
-            if(prompt("পাসওয়ার্ড দিন:") === ADMIN_PASS) {
-                isAdmin = true;
-                document.body.classList.add('is-admin');
-            }
+            const p = prompt("অ্যাডমিন পাসওয়ার্ড দিন (ডিফল্ট: 1234):");
+            if(p === "1234") {
+                isAdmin = !isAdmin;
+                document.body.classList.toggle('is-admin', isAdmin);
+                renderMembers();
+                renderYearsSettings();
+                alert(isAdmin ? "অ্যাডমিন মোড অন হয়েছে!" : "অ্যাডমিন মোড অফ হয়েছে!");
+            } else { alert("ভুল পাসওয়ার্ড!"); }
         };
 
-        window.renderMembers = function() {
+        function calculateTotal(m) {
+            return (m.additional || 0) + Object.values(m.payments || {}).reduce((a,b)=>a+b, 0);
+        }
+
+        function renderMembers() {
             const list = document.getElementById('memberList');
             list.innerHTML = members.map((m, i) => {
-                const total = (m.additional || 0) + Object.values(m.payments || {}).reduce((a, b) => a + b, 0);
+                let total = calculateTotal(m);
                 return `
-                    <div class="bg-white p-5 rounded-3xl shadow-sm flex justify-between items-center border border-gray-50 cursor-pointer" onclick="if(isAdmin) openPayModal('${m.docId}')">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 font-black">${i+1}</div>
-                            <div><h3 class="font-bold text-gray-800">${m.name}</h3><p class="text-[10px] text-gray-400 font-bold uppercase">জমা: ৳${m.additional}</p></div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-lg font-black text-indigo-700">৳${total.toLocaleString()}</p>
-                            <span class="text-[9px] text-gray-300 font-bold uppercase tracking-widest">${isAdmin ? 'টাকা জমা নিন' : 'মোট জমা'}</span>
+                <div class="bg-white p-5 rounded-3xl shadow-sm flex justify-between items-center border border-gray-50 transition-all hover:border-indigo-100">
+                    <div class="flex items-center gap-4 flex-1" onclick="if(isAdmin) openPayModal(${i})">
+                        <div class="w-10 h-10 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 font-bold text-sm shadow-inner">${i+1}</div>
+                        <div>
+                            <h3 class="font-bold text-gray-800 leading-tight">${m.name}</h3>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-tight">অতিরিক্ত: ৳${m.additional}</p>
                         </div>
                     </div>
-                `;
+                    <div class="flex items-center gap-4">
+                        <div class="text-right" onclick="if(isAdmin) openPayModal(${i})">
+                            <p class="text-lg font-black text-indigo-700 leading-none">৳${total.toLocaleString()}</p>
+                            <span class="${isAdmin ? 'text-emerald-500' : 'text-gray-300'} text-[9px] font-black uppercase mt-1 block">${isAdmin ? 'টাকা নিন' : 'জমা'}</span>
+                        </div>
+                        <button onclick="deleteMember(${i})" class="admin-only p-2 text-red-100 hover:text-red-500 bg-red-50 rounded-lg transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                </div>`;
             }).join('');
-        };
+        }
 
-        window.renderReport = function() {
-            const header = document.getElementById('reportHeader');
-            const tbody = document.getElementById('reportTableBody');
-            const yrs = [...activeYears].sort((a,b)=>a-b);
-            header.innerHTML = '<th class="p-4 border-b">নাম</th>' + yrs.map(y => `<th class="p-4 border-b text-center">${y}</th>`).join('') + '<th class="p-4 border-b text-right">মোট</th>';
-            tbody.innerHTML = members.map(m => {
-                let grand = (m.additional || 0) + Object.values(m.payments || {}).reduce((a,b)=>a+b, 0);
-                return `<tr><td class="p-4 font-bold border-b">${m.name}</td>` + yrs.map(y => {
-                    let s = 0; for(let k in m.payments) if(k.startsWith(y)) s += m.payments[k];
-                    return `<td class="p-4 text-center border-b text-gray-500">৳${s}</td>`;
-                }).join('') + `<td class="p-4 text-right border-b font-black text-indigo-700">৳${grand.toLocaleString()}</td></tr>`;
-            }).join('');
-        };
-
-        window.addNewYear = async function() {
-            const y = parseInt(document.getElementById('newYearInput').value);
-            if(y && !activeYears.includes(y)) {
-                activeYears.push(y);
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'config'), { years: activeYears });
+        window.deleteMember = function(i) {
+            if(confirm(`${members[i].name}-কে ডিলিট করতে চান?`)) {
+                members.splice(i, 1);
+                save();
             }
         };
 
-        document.getElementById('memberForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const nm = { name: document.getElementById('mName').value, share: parseInt(document.getElementById('mShare').value), additional: parseInt(document.getElementById('mAdd').value), payments: {} };
-            await setDoc(doc(collection(db, 'artifacts', appId, 'public', 'data', 'members')), nm);
-            toggleModal('memberModal'); e.target.reset();
+        function renderDues() {
+            const list = document.getElementById('duesList');
+            const duers = members.filter(m => (m.dues || 0) > 0);
+            if(duers.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-400 py-10 font-bold italic">বর্তমানে কারো কোনো বকেয়া নেই! 🎉</p>';
+                return;
+            }
+            list.innerHTML = duers.map(m => `
+                <div class="bg-white p-4 rounded-2xl border-l-4 border-orange-400 shadow-sm flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-gray-700 text-sm">${m.name}</h4>
+                        <p class="text-[10px] text-gray-400 uppercase font-bold">বকেয়া পরিমাণ</p>
+                    </div>
+                    <p class="text-orange-600 font-black">৳${m.dues.toLocaleString()}</p>
+                </div>`).join('');
+        }
+
+        function updateStats() {
+            let total = members.reduce((s, m) => s + calculateTotal(m), 0);
+            let totalDues = members.reduce((s, m) => s + (m.dues || 0), 0);
+            document.getElementById('totalDeposit').innerText = `৳ ${total.toLocaleString()}`;
+            document.getElementById('totalMembers').innerText = `${members.length} জন`;
+            document.getElementById('totalDues').innerText = `৳ ${totalDues.toLocaleString()}`;
+        }
+
+        window.addNewYear = function() {
+            let y = parseInt(document.getElementById('newYearInput').value);
+            if(y && !activeYears.includes(y)) {
+                activeYears.push(y);
+                activeYears.sort((a,b)=>a-b);
+                save();
+                document.getElementById('newYearInput').value = '';
+                alert(`${y} সাল যোগ করা হয়েছে!`);
+            }
         };
 
-        document.getElementById('payForm').onsubmit = async (e) => {
+        window.removeYear = function(y) {
+            if(confirm(`${y} সালটি সিস্টেম থেকে মুছে ফেলতে চান?`)) {
+                activeYears = activeYears.filter(year => year !== y);
+                save();
+            }
+        };
+
+        function renderYearsSettings() {
+            const container = document.getElementById('yearsList');
+            container.innerHTML = activeYears.map(y => `
+                <div class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-2">
+                    ${y}
+                    <button onclick="removeYear(${y})" class="text-indigo-300 hover:text-red-500 font-bold">×</button>
+                </div>
+            `).join('');
+            document.getElementById('payYear').innerHTML = activeYears.sort((a,b)=>b-a).map(y => `<option value="${y}">${y}</option>`).join('');
+        }
+
+        window.showSubPage = function(page) {
+            ['list', 'dues', 'settings'].forEach(p => document.getElementById(`sub-${p}`).classList.add('hidden'));
+            document.getElementById(`sub-${page}`).classList.remove('hidden');
+            ['list', 'dues', 'settings'].forEach(p => {
+                const btn = document.getElementById(`tab-${p}`);
+                if(btn) btn.className = p === page ? 'pb-2 font-bold text-sm tab-active' : 'pb-2 font-bold text-sm text-gray-400';
+            });
+        }
+
+        window.showPage = function(p) {
+            document.getElementById('mainContent').classList.toggle('hidden', p==='report');
+            document.getElementById('reportContent').classList.toggle('hidden', p!=='report');
+            document.getElementById('nav-home').className = p === 'dashboard' ? 'flex flex-col items-center text-indigo-600' : 'flex flex-col items-center text-gray-400';
+            document.getElementById('nav-report').className = p === 'report' ? 'flex flex-col items-center text-indigo-600' : 'flex flex-col items-center text-gray-400';
+            if(p==='report') renderReport();
+        }
+
+        function renderReport() {
+            const header = document.getElementById('reportHeader');
+            const tbody = document.getElementById('reportTableBody');
+            const sortedYears = [...activeYears].sort((a,b)=>a-b);
+            header.innerHTML = '<th class="p-4 border-b font-black sticky left-0 bg-indigo-50 z-10">সদস্যের নাম</th>' + 
+            sortedYears.map(y => `<th class="p-4 border-b text-center font-bold">${y}</th>`).join('') + 
+            '<th class="p-4 border-b text-right font-black bg-indigo-100/50">সর্বমোট</th>';
+            tbody.innerHTML = members.map(m => {
+                let grand = calculateTotal(m);
+                let yearRows = sortedYears.map(y => {
+                    let sum = 0;
+                    for(let key in m.payments) if(key.startsWith(y)) sum += m.payments[key];
+                    return `<td class="p-4 text-center border-b text-gray-500">৳${sum.toLocaleString()}</td>`;
+                }).join('');
+                return `<tr>
+                    <td class="p-4 font-bold border-b text-gray-800 sticky left-0 bg-white z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">${m.name}</td>
+                    ${yearRows}
+                    <td class="p-4 text-right border-b font-black text-indigo-700 bg-indigo-50/20">৳${grand.toLocaleString()}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        document.getElementById('memberForm').onsubmit = (e) => {
             e.preventDefault();
-            const id = document.getElementById('payMemberId').value;
-            const m = members.find(x => x.docId === id);
-            const key = `${document.getElementById('payYear').value}_${document.getElementById('payMonth').value}`;
-            const pay = { ...m.payments }; pay[key] = (pay[key] || 0) + parseInt(document.getElementById('payAmount').value);
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'members', id), { payments: pay });
-            toggleModal('payModal');
+            members.push({ 
+                name: document.getElementById('mName').value, 
+                additional: parseInt(document.getElementById('mAdd').value) || 0, 
+                dues: parseInt(document.getElementById('mDue').value) || 0,
+                payments: {} 
+            });
+            save(); toggleModal('memberModal'); e.target.reset();
+        };
+
+        document.getElementById('payForm').onsubmit = (e) => {
+            e.preventDefault();
+            let idx = document.getElementById('payMemberIdx').value;
+            let amt = parseInt(document.getElementById('payAmount').value) || 0;
+            let key = `${document.getElementById('payYear').value}_${document.getElementById('payMonth').value}`;
+            members[idx].payments[key] = (members[idx].payments[key] || 0) + amt;
+            if((members[idx].dues || 0) >= amt) members[idx].dues -= amt;
+            else members[idx].dues = 0;
+            save(); toggleModal('payModal');
         };
 
         window.toggleModal = (id) => document.getElementById(id).classList.toggle('hidden');
-        window.showPage = (p) => { 
-            document.getElementById('mainContent').classList.toggle('hidden', p==='report'); 
-            document.getElementById('reportContent').classList.toggle('hidden', p!=='report'); 
-            if(p==='report') renderReport(); 
+        window.openPayModal = (i) => {
+            document.getElementById('payMemberIdx').value = i;
+            document.getElementById('payMemberName').innerText = members[i].name;
+            toggleModal('payModal');
         };
-        window.openPayModal = (id) => { 
-            const m = members.find(x => x.docId === id); 
-            document.getElementById('payMemberName').innerText = m.name; 
-            document.getElementById('payMemberId').value = id; 
-            toggleModal('payModal'); 
-        };
-        function updateStats() {
-            const total = members.reduce((s, m) => s + (m.additional || 0) + Object.values(m.payments || {}).reduce((a,b)=>a+b, 0), 0);
-            document.getElementById('totalDeposit').innerText = `৳ ${total.toLocaleString()}`;
-            document.getElementById('totalMembers').innerText = members.length;
-        }
-        function updateStatus(t, c) { document.getElementById('syncStatus').className = `w-2 h-2 rounded-full ${c}`; document.getElementById('statusText').innerText = t; }
-        function renderYearTags() { document.getElementById('yearTags').innerHTML = activeYears.map(y => `<span class="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-xs font-bold">${y}</span>`).join(''); }
-        function populateYearOptions() { document.getElementById('payYear').innerHTML = activeYears.sort((a,b)=>b-a).map(y => `<option value="${y}">${y}</option>`).join(''); }
 
-        init();
+        save();
     </script>
 </body>
 </html>
