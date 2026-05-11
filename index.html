@@ -21,12 +21,14 @@ import {
   setDoc, 
   onSnapshot, 
   collection, 
-  query,
-  getDocs
+  query 
 } from 'firebase/firestore';
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 
-// Firebase configuration from environment
+/**
+ * Firebase Config - এই ভেরিয়েবলগুলো এনভায়রনমেন্ট থেকে আসে।
+ * গিটহাবে পুশ করার সময় মনে রাখবেন এপিআই কীগুলো সিকিউর রাখতে।
+ */
 const firebaseConfig = JSON.parse(__firebase_config);
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -42,13 +44,17 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [yearlyData, setYearlyData] = useState({});
 
-  // Auth initialization
+  // অথেন্টিকেশন হ্যান্ডলিং
   useEffect(() => {
     const initAuth = async () => {
-      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-        await signInWithCustomToken(auth, __initial_auth_token);
-      } else {
-        await signInAnonymously(auth);
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (err) {
+        console.error("Auth Error:", err);
       }
     };
     initAuth();
@@ -56,7 +62,7 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
-  // Real-time Data Sync
+  // ডাটাবেজ থেকে রিয়েল-টাইম ডাটা ফেচ করা
   useEffect(() => {
     if (!user) return;
 
@@ -67,6 +73,7 @@ const App = () => {
         data[doc.id] = doc.data();
       });
       
+      // ডাটাবেজ খালি থাকলে প্রাথমিক ডাটা দিয়ে সিড করা
       if (Object.keys(data).length === 0) {
         seedDatabase();
       } else {
@@ -81,7 +88,7 @@ const App = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // Initial Seeding with your provided image data
+  // প্রাথমিক ডাটা সেটআপ (ছবির তথ্য অনুযায়ী)
   const seedDatabase = async () => {
     const membersList = [
       { id: 1, name: "Md. Tareq" }, { id: 2, name: "Simon Hoque" },
@@ -112,7 +119,6 @@ const App = () => {
         return { ...m, paid: paidMap[m.id] || 0 };
       })},
       '2026': { members: membersList.map(m => {
-        // Based on "Total Summary Up to April-2026"
         const paidMap = { 1: 4000, 2: 3000, 3: 4000, 4: 16000, 5: 16000, 6: 4000, 7: 4000, 8: 14000, 9: 4000, 10: 4000, 11: 4000, 12: 4000, 13: 5000, 14: 4000, 15: 4000 };
         return { ...m, paid: paidMap[m.id] || 0 };
       })}
@@ -126,40 +132,14 @@ const App = () => {
   const years = Object.keys(yearlyData).sort();
   const currentMembers = yearlyData[activeYear]?.members || [];
 
-  // Summary logic (All years combined)
-  const allTimeStats = useMemo(() => {
-    let grandTotal = 0;
-    let totalDues = 0;
-    const memberTotals = {};
-
-    Object.values(yearlyData).forEach(yearData => {
-      yearData.members.forEach(m => {
-        if (!memberTotals[m.id]) memberTotals[m.id] = { name: m.name, paid: 0 };
-        memberTotals[m.id].paid += (m.paid || 0);
-      });
-    });
-
-    // Assume 2021 + Additional from the 2026 chart
-    const carryOver = {
-      1: 14000, 2: 13000, 3: 10000, 4: 14000, 5: 14000, 6: 4000, 7: 4000, 
-      8: 14000, 9: 4000, 10: 4000, 11: 14000, 12: 4000, 13: 14000, 14: 14000, 15: 14000
-    };
-
-    const finalMembers = Object.keys(memberTotals).map(id => {
-      const total = memberTotals[id].paid + (carryOver[id] || 0);
-      const target = 10000 + (12000 * 5); // Base 10k + (22,23,24,25,26 full)
-      return { id, name: memberTotals[id].name, total, due: Math.max(0, 99000 - total) }; // Based on user image logic
-    });
-
-    return finalMembers;
-  }, [yearlyData]);
-
+  // বাৎসরিক স্ট্যাটস ক্যালকুলেশন
   const stats = useMemo(() => {
     const totalCollected = currentMembers.reduce((sum, m) => sum + (m.paid || 0), 0);
     const totalDues = currentMembers.reduce((sum, m) => sum + Math.max(0, 12000 - (m.paid || 0)), 0);
     return { totalCollected, totalDues };
   }, [currentMembers]);
 
+  // এডিট হ্যান্ডলার
   const handleEditClick = (member) => {
     setEditingMember(member);
     setEditValue(member.paid.toString());
@@ -185,7 +165,7 @@ const App = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4">
           <RefreshCw className="animate-spin text-rose-500" size={40} />
-          <p className="text-slate-600 font-bold">সার্ভার থেকে তথ্য আসছে...</p>
+          <p className="text-slate-600 font-bold">সার্ভার থেকে তথ্য লোড হচ্ছে...</p>
         </div>
       </div>
     );
@@ -193,6 +173,7 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24 font-sans text-slate-900">
+      {/* হেডার সেকশন */}
       <header className="bg-white border-b sticky top-0 z-10 px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -209,12 +190,12 @@ const App = () => {
           </div>
           <div className="flex gap-2">
             <button 
-              onClick={() => setView('total')}
+              onClick={() => setView(view === 'total' ? 'dashboard' : 'total')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 view === 'total' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'
               }`}
             >
-              মোট সারাংশ
+              {view === 'total' ? 'ফিরুন' : 'মোট সারাংশ'}
             </button>
           </div>
         </div>
@@ -239,6 +220,7 @@ const App = () => {
       <main className="p-4 max-w-md mx-auto space-y-6">
         {view === 'dashboard' ? (
           <>
+            {/* বাৎসরিক কার্ড */}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-emerald-500 p-4 rounded-3xl shadow-lg shadow-emerald-100 text-white">
                 <div className="flex items-center justify-between mb-2">
@@ -256,6 +238,7 @@ const App = () => {
               </div>
             </div>
 
+            {/* সদস্য তালিকা */}
             <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
               <div className="p-6 border-b bg-slate-50/50 flex justify-between items-center">
                 <div className="flex items-center gap-2">
@@ -287,9 +270,7 @@ const App = () => {
                         <p className={`text-sm font-black ${due > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
                           {due > 0 ? `৳${due.toLocaleString()}` : 'পরিশোধিত'}
                         </p>
-                        <div className="flex items-center justify-end gap-1 text-slate-300 mt-1">
-                          <Edit2 size={10} />
-                        </div>
+                        <Edit2 size={10} className="text-slate-300 ml-auto mt-1" />
                       </div>
                     </div>
                   );
@@ -298,6 +279,7 @@ const App = () => {
             </div>
           </>
         ) : (
+          /* অল-টাইম সারাংশ ভিউ */
           <div className="space-y-4 animate-in fade-in duration-500">
             <div className="bg-slate-800 rounded-3xl p-6 text-white shadow-xl">
               <h2 className="text-lg font-bold mb-1">সর্বমোট হিসাব সারাংশ</h2>
@@ -320,7 +302,6 @@ const App = () => {
                 <Info size={14} className="text-slate-400" />
               </div>
               <div className="divide-y divide-slate-50">
-                {/* Manual data from the last image for maximum accuracy */}
                 {[
                   { name: "Md. Tareq", paid: 15000, due: 51000 },
                   { name: "Simon Hoque", paid: 14000, due: 52000 },
@@ -359,6 +340,7 @@ const App = () => {
         )}
       </main>
 
+      {/* এডিট মোডাল */}
       {editingMember && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-6">
           <div className="bg-white rounded-[2rem] w-full max-w-xs overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
@@ -369,15 +351,15 @@ const App = () => {
               >
                 <X size={20} />
               </button>
-              <div className="w-20 h-20 bg-white/20 rounded-3xl mx-auto mb-4 flex items-center justify-center">
-                <span className="text-3xl font-black">{editingMember.name.charAt(0)}</span>
+              <div className="w-16 h-16 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                <span className="text-2xl font-black">{editingMember.name.charAt(0)}</span>
               </div>
-              <h3 className="text-xl font-black leading-tight">{editingMember.name}</h3>
-              <p className="text-xs opacity-70 font-bold mt-1 uppercase tracking-widest">{activeYear} সালের কিস্তি</p>
+              <h3 className="text-lg font-black leading-tight">{editingMember.name}</h3>
+              <p className="text-[10px] opacity-70 font-bold mt-1 uppercase tracking-widest">{activeYear} সালের কিস্তি</p>
             </div>
             <div className="p-8 space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">পরিশোধিত টাকা (৳)</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block ml-1">জমা টাকা (৳)</label>
                 <input 
                   type="number" 
                   autoFocus
@@ -390,30 +372,27 @@ const App = () => {
                 onClick={handleSaveEdit}
                 className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl shadow-slate-200"
               >
-                <Save size={20} /> তথ্য সেভ করুন
+                <Save size={20} /> সেভ করুন
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* বটম নেভিগেশন */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-slate-100 px-12 py-5 flex justify-around items-center z-40">
         <button 
           onClick={() => setView('dashboard')}
           className={`flex flex-col items-center gap-1.5 transition-all ${view === 'dashboard' ? 'text-rose-500 scale-110' : 'text-slate-400 hover:text-slate-600'}`}
         >
-          <div className={view === 'dashboard' ? 'bg-rose-50 p-2 rounded-xl' : 'p-2'}>
-            <Wallet size={24} />
-          </div>
+          <Wallet size={24} />
           <span className="text-[10px] font-black uppercase tracking-tighter">বাৎসরিক</span>
         </button>
         <button 
           onClick={() => setView('total')}
           className={`flex flex-col items-center gap-1.5 transition-all ${view === 'total' ? 'text-slate-900 scale-110' : 'text-slate-400 hover:text-slate-600'}`}
         >
-          <div className={view === 'total' ? 'bg-slate-100 p-2 rounded-xl' : 'p-2'}>
-            <CheckCircle2 size={24} />
-          </div>
+          <CheckCircle2 size={24} />
           <span className="text-[10px] font-black uppercase tracking-tighter">সারাংশ</span>
         </button>
       </nav>
