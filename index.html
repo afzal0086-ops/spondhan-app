@@ -7,106 +7,129 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
-        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f0f2f5; }
+        .member-card { transition: transform 0.2s; }
+        .member-card:active { transform: scale(0.98); }
     </style>
 </head>
-<body class="p-4">
+<body class="pb-24">
 
-    <div class="text-center mb-6">
-        <h1 class="text-2xl font-bold text-red-600">Spondhan-01</h1>
-        <p class="text-gray-600 text-sm">Monthly Installment Statement - 2026</p>
+    <div class="bg-red-600 text-white p-4 sticky top-0 z-10 shadow-md text-center">
+        <h1 class="text-xl font-bold">Spondhan-01 (স্পন্দন-০১)</h1>
+        <p class="text-xs opacity-90">টার্গেট: ৬৬,০০০ টাকা (প্রতিজন)</p>
     </div>
 
-    <div class="grid grid-cols-2 gap-4 mb-6">
-        <div class="card p-4 text-center border-l-4 border-green-500">
-            <p class="text-xs uppercase text-gray-500 font-bold">Total Amount</p>
-            <p id="grandTotal" class="text-xl font-bold text-gray-800">৳ 0.00</p>
+    <div class="p-4 grid grid-cols-2 gap-3">
+        <div class="bg-white p-3 rounded-xl shadow-sm border-b-4 border-green-500">
+            <p class="text-gray-500 text-xs font-bold uppercase">মোট জমা</p>
+            <p id="grandTotal" class="text-lg font-bold text-green-600">৳ 0</p>
         </div>
-        <div class="card p-4 text-center border-l-4 border-red-500">
-            <p class="text-xs uppercase text-gray-500 font-bold">Total Dues</p>
-            <p id="totalDues" class="text-xl font-bold text-gray-800">৳ 0.00</p>
+        <div class="bg-white p-3 rounded-xl shadow-sm border-b-4 border-red-500">
+            <p class="text-gray-500 text-xs font-bold uppercase">মোট বকেয়া</p>
+            <p id="totalDues" class="text-lg font-bold text-red-600">৳ 0</p>
         </div>
     </div>
 
-    <div class="space-y-4" id="memberList">
+    <div class="px-4 mb-4">
+        <input type="text" id="searchInput" onkeyup="filterMembers()" placeholder="মেম্বার খুঁজুন..." class="w-full p-3 rounded-lg border-none shadow-sm focus:ring-2 focus:ring-red-500">
+    </div>
+
+    <div class="px-4 space-y-3" id="memberList">
         </div>
 
-    <div class="fixed bottom-6 right-6">
-        <button onclick="saveData()" class="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700">
-            <i class="fas fa-save"></i> Save Data
+    <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-11/12">
+        <button onclick="saveToLocal()" class="w-full bg-blue-600 text-white py-4 rounded-2xl shadow-2xl font-bold flex justify-center items-center gap-2 active:bg-blue-800">
+            <i class="fas fa-cloud-upload-alt"></i> ডাটা সেভ করুন
         </button>
     </div>
 
     <script>
-        // আপনার ইমেজ অনুযায়ী মেম্বার লিস্ট
-        const members = [
-            { id: 1, name: "Md. Tareq", paid: 15000, target: 66000 },
-            { id: 2, name: "Simon Hoque", paid: 14000, target: 66000 },
-            { id: 3, name: "Ismaiel Zabiullah", paid: 27000, target: 66000 },
-            { id: 4, name: "Zunaid Bhuiyan", paid: 66000, target: 66000 },
-            { id: 5, name: "Enamul Hoque Rimon", paid: 66000, target: 66000 },
-            { id: 13, name: "Md Ali Afzal", paid: 63000, target: 66000 },
-            // এখানে অন্য সব মেম্বারদের নাম যোগ করা যাবে...
+        const TARGET = 66000;
+        // আপনার ইমেজ থেকে নেওয়া সঠিক ডাটা
+        let members = [
+            { id: 1, name: "Md. Tareq", paid: 15000 },
+            { id: 2, name: "Simon Hoque", paid: 14000 },
+            { id: 3, name: "Ismaiel Zabiullah", paid: 27000 },
+            { id: 4, name: "Zunaid Bhuiyan", paid: 66000 },
+            { id: 5, name: "Enamul Hoque Rimon", paid: 66000 },
+            { id: 6, name: "Md. Al Amin Robin", paid: 23000 },
+            { id: 7, name: "Sujan Khan", paid: 8000 },
+            { id: 8, name: "Rashedul Alam", paid: 49000 },
+            { id: 9, name: "Arif Chowdhury", paid: 39000 },
+            { id: 10, name: "Md. Nazim Uddin Bhuiyan", paid: 27000 },
+            { id: 11, name: "Md Sagor Khandakar", paid: 36000 },
+            { id: 12, name: "Mohamad Safayet Khan", paid: 17000 },
+            { id: 13, name: "Md Ali Afzal", paid: 63000 },
+            { id: 14, name: "Mosharof Hossain", paid: 60000 },
+            { id: 15, name: "Md. Lutfur Rahman (Rasel)", paid: 20000 }
         ];
 
-        function renderMembers() {
-            const listContainer = document.getElementById('memberList');
-            let grandTotal = 0;
-            let totalDues = 0;
+        function render() {
+            const container = document.getElementById('memberList');
+            let gTotal = 0;
+            let tDues = 0;
+            container.innerHTML = '';
 
-            listContainer.innerHTML = '';
+            members.forEach((m, index) => {
+                const dues = TARGET - m.paid;
+                gTotal += m.paid;
+                tDues += dues;
 
-            members.forEach(m => {
-                const dues = m.target - m.paid;
-                grandTotal += m.paid;
-                totalDues += dues;
-
-                listContainer.innerHTML += `
-                    <div class="card p-4 flex justify-between items-center">
-                        <div>
-                            <p class="font-bold text-gray-700">${m.name}</p>
-                            <p class="text-xs text-gray-500 italic">Target: ৳${m.target}</p>
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center member-card">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-gray-100 h-10 w-10 rounded-full flex items-center justify-center font-bold text-gray-500 border">
+                                ${index + 1}
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800">${m.name}</h3>
+                                <p class="text-xs ${dues <= 0 ? 'text-green-500' : 'text-red-500'} font-semibold">
+                                    ${dues <= 0 ? 'পরিশোধিত' : 'বকেয়া: ৳' + dues.toLocaleString()}
+                                </p>
+                            </div>
                         </div>
-                        <div class="text-right">
-                            <input type="number" onchange="updatePaid(${m.id}, this.value)" 
-                                value="${m.paid}" 
-                                class="w-24 border rounded px-2 py-1 text-sm text-right font-semibold text-green-600">
-                            <p class="text-xs ${dues > 0 ? 'text-red-500' : 'text-gray-400'} mt-1">
-                                Dues: ৳${dues}
-                            </p>
+                        <div class="relative">
+                            <span class="absolute -top-2 -left-2 text-[10px] bg-gray-200 px-1 rounded text-gray-600">জমা (৳)</span>
+                            <input type="number" value="${m.paid}" 
+                                onchange="updateAmount(${m.id}, this.value)"
+                                class="w-24 border-b-2 border-blue-200 focus:border-blue-500 outline-none text-right font-bold text-gray-700 p-1">
                         </div>
                     </div>
                 `;
             });
 
-            document.getElementById('grandTotal').innerText = '৳ ' + grandTotal.toLocaleString();
-            document.getElementById('totalDues').innerText = '৳ ' + totalDues.toLocaleString();
+            document.getElementById('grandTotal').innerText = '৳ ' + gTotal.toLocaleString();
+            document.getElementById('totalDues').innerText = '৳ ' + tDues.toLocaleString();
         }
 
-        function updatePaid(id, val) {
-            const member = members.find(m => m.id === id);
-            if(member) member.paid = parseFloat(val) || 0;
-            renderMembers();
+        function updateAmount(id, val) {
+            const m = members.find(item => item.id === id);
+            if(m) m.paid = parseFloat(val) || 0;
+            render();
         }
 
-        function saveData() {
-            localStorage.setItem('spondhanData', JSON.stringify(members));
-            alert('আপনার ডেটা মোবাইলে সেভ হয়েছে!');
+        function saveToLocal() {
+            localStorage.setItem('spondhan_v1', JSON.stringify(members));
+            alert('সফলভাবে সেভ করা হয়েছে!');
         }
 
-        // Load data on start
+        function filterMembers() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.getElementsByClassName('member-card');
+            members.forEach((m, i) => {
+                if(m.name.toLowerCase().includes(query)) {
+                    cards[i].style.display = "flex";
+                } else {
+                    cards[i].style.display = "none";
+                }
+            });
+        }
+
         window.onload = () => {
-            const saved = localStorage.getItem('spondhanData');
-            if(saved) {
-                const parsed = JSON.parse(saved);
-                // Update local array with saved values
-                parsed.forEach(p => {
-                    const m = members.find(mem => mem.id === p.id);
-                    if(m) m.paid = p.paid;
-                });
-            }
-            renderMembers();
+            const saved = localStorage.getItem('spondhan_v1');
+            if(saved) members = JSON.parse(saved);
+            render();
         };
     </script>
 </body>
